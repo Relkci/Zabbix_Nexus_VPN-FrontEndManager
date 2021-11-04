@@ -1,0 +1,1301 @@
+zabbix_export:
+  version: '5.4'
+  date: '2021-11-04T19:14:56Z'
+  groups:
+    -
+      uuid: 2924d689ecf34451a014537e8b5cbc59
+      name: Nexus
+    -
+      uuid: 0587f63d7d4343e0a0070b4e382907ce
+      name: VPNs
+    -
+      uuid: 73164a3206b84c1480e4dc2af4aa4ce3
+      name: z_1_BHIS-Templates
+  templates:
+    -
+      uuid: a084cc7ad9224faba47bb9b51c1d9b9e
+      template: 'Nexus VPN FrontEnd Endpoint'
+      name: 'Nexus VPN FrontEnd Endpoint'
+      groups:
+        -
+          name: Nexus
+        -
+          name: VPNs
+        -
+          name: z_1_BHIS-Templates
+      items:
+        -
+          uuid: 00d25727faab40fe8d216de681727af2
+          name: 'Nexus Expired Implant Connection Attempts'
+          type: ZABBIX_ACTIVE
+          key: 'log.count[{$NEXUS_SYSLOG_PATH},"error=certificate has expired"]'
+          units: Attempts
+          tags:
+            -
+              tag: Nexus
+              value: Connections
+            -
+              tag: Nexus
+              value: Errors
+            -
+              tag: Nexus
+              value: Implants
+            -
+              tag: Nexus
+              value: TLS
+        -
+          uuid: 09f5830c276c4011bde632f24dd2c282
+          name: 'Nexus TLS Handshake Failures'
+          type: ZABBIX_ACTIVE
+          key: 'log.count[{$NEXUS_SYSLOG_PATH},"TLS Error: TLS handshake failed"]'
+          units: Failures
+          tags:
+            -
+              tag: Nexus
+              value: Connections
+            -
+              tag: Nexus
+              value: Errors
+            -
+              tag: Nexus
+              value: TLS
+        -
+          uuid: 420c63d5125f4c0dbf66b9a17242250c
+          name: 'Nexus Wiregard KeepAlive Packet'
+          type: ZABBIX_ACTIVE
+          key: 'log.count[{$NEXUS_SYSLOG_PATH},Receiving keepalive packet from peer]'
+          units: Packets
+          tags:
+            -
+              tag: Nexus
+              value: Wireguard
+        -
+          uuid: 813d422193744bb78b2951e8d7ed79fe
+          name: 'Nexus Expired Implant Connection Log'
+          type: ZABBIX_ACTIVE
+          key: 'log[{$NEXUS_SYSLOG_PATH},(.*(vpn ovpn-)*(?:error=certificate has expired).*)]'
+          trends: '0'
+          value_type: LOG
+          tags:
+            -
+              tag: Nexus
+              value: Errors
+            -
+              tag: Nexus
+              value: Implants
+            -
+              tag: Nexus
+              value: Log
+        -
+          uuid: 96016e32bfab4b1bb0f28be26fd2a364
+          name: 'Nexus Implant Client Bytes Received'
+          type: DEPENDENT
+          key: nexus.ovpn.implant.bytes.rcvd
+          delay: '0'
+          units: B
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.["Bytes Received"].sum()'
+          master_item:
+            key: nexus.ovpn.implant.status.clientlist
+          tags:
+            -
+              tag: Nexus
+              value: Implants
+            -
+              tag: Nexus
+              value: 'Network Traffic'
+        -
+          uuid: 2b39ab3e596c4d7985cc8b1ed8c4b01e
+          name: 'Nexus Implant Client Bytes Sent'
+          type: DEPENDENT
+          key: nexus.ovpn.implant.bytes.sent
+          delay: '0'
+          units: B
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$..["Bytes Sent"].sum()'
+          master_item:
+            key: nexus.ovpn.implant.status.clientlist
+          tags:
+            -
+              tag: Nexus
+              value: Implants
+            -
+              tag: Nexus
+              value: 'Network Traffic'
+        -
+          uuid: fb87507117fc4626addedc4ddfc69370
+          name: 'Nexus Implant Client Connections'
+          type: DEPENDENT
+          key: nexus.ovpn.implant.connections
+          delay: '0'
+          units: Connections
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: nexus.ovpn.implant.status.clientlist
+          tags:
+            -
+              tag: Nexus
+              value: Connections
+            -
+              tag: Nexus
+              value: Implants
+        -
+          uuid: 01f1e6f8d9084a41a80dba175a56dcc0
+          name: 'Nexus Implant Client Connections Change'
+          type: DEPENDENT
+          key: nexus.ovpn.implant.connections.change
+          delay: '0'
+          units: Connections
+          preprocessing:
+            -
+              type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: nexus.ovpn.implant.connections
+        -
+          uuid: cde6fa75b6a248c8898e7db91ad973cf
+          name: nexus.ovpn.implant.status.clientlist
+          type: DEPENDENT
+          key: nexus.ovpn.implant.status.clientlist
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: REGEX
+              parameters:
+                - 'Common Name([.|\s\S]*)ROUTING'
+                - \0
+            -
+              type: STR_REPLACE
+              parameters:
+                - ROUTING
+                - ''
+            -
+              type: CSV_TO_JSON
+              parameters:
+                - ''
+                - ''
+                - '1'
+          master_item:
+            key: 'vfs.file.contents[{$NEXUS_OVPN_IMPLANTS_STATUS}]'
+          tags:
+            -
+              tag: Nexus
+              value: data
+            -
+              tag: Nexus
+              value: Implants
+        -
+          uuid: bed4a4ac93b14f64b9d8e1739ce89a55
+          name: nexus.ovpn.implant.status.routingtable
+          type: DEPENDENT
+          key: nexus.ovpn.implant.status.routingtable
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: REGEX
+              parameters:
+                - 'ROUTING TABLE([.|\s\S]*)GLOBAL STATS'
+                - \0
+            -
+              type: STR_REPLACE
+              parameters:
+                - 'GLOBAL STATS'
+                - ''
+            -
+              type: STR_REPLACE
+              parameters:
+                - 'ROUTING TABLE'
+                - ''
+            -
+              type: TRIM
+              parameters:
+                - \n\r
+            -
+              type: CSV_TO_JSON
+              parameters:
+                - ''
+                - ''
+                - '1'
+          master_item:
+            key: 'vfs.file.contents[{$NEXUS_OVPN_IMPLANTS_STATUS}]'
+          tags:
+            -
+              tag: Nexus
+              value: data
+            -
+              tag: Nexus
+              value: Implants
+        -
+          uuid: 9b39cccf271e4eaaad6139bb775ec43a
+          name: 'Nexus Operator Bytes Received'
+          type: DEPENDENT
+          key: nexus.ovpn.operator.bytes.rcvd
+          delay: '0'
+          units: B
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.["Bytes Received"].sum()'
+          master_item:
+            key: nexus.ovpn.operator.status.clientlist
+          tags:
+            -
+              tag: Nexus
+              value: 'Network Traffic'
+            -
+              tag: Nexus
+              value: Operators
+        -
+          uuid: db25e0718e144407a0983e87c95c2497
+          name: 'Nexus Operator Bytes Sent'
+          type: DEPENDENT
+          key: nexus.ovpn.operator.bytes.sent
+          delay: '0'
+          units: B
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.["Bytes Sent"].sum()'
+          master_item:
+            key: nexus.ovpn.operator.status.clientlist
+          tags:
+            -
+              tag: Nexus
+              value: 'Network Traffic'
+            -
+              tag: Nexus
+              value: Operators
+        -
+          uuid: aee14cec0ac242ce82ae0ac41aee052b
+          name: 'Nexus Operator Client Connections'
+          type: DEPENDENT
+          key: nexus.ovpn.operator.connections
+          delay: '0'
+          units: Connections
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: nexus.ovpn.operator.status.clientlist
+          tags:
+            -
+              tag: Nexus
+              value: Connections
+            -
+              tag: Nexus
+              value: Operators
+        -
+          uuid: 739f3abdd51b4cb2a8fbb7c399b30be6
+          name: 'Nexus Operator Client Connections Change'
+          type: DEPENDENT
+          key: nexus.ovpn.operator.connections.change
+          delay: '0'
+          units: Connections
+          preprocessing:
+            -
+              type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: nexus.ovpn.operator.connections
+          tags:
+            -
+              tag: Nexus
+              value: Operators
+        -
+          uuid: 678d19c6aaba4cfda6475ae4fc0c721c
+          name: nexus.ovpn.operator.status.clientlist
+          type: DEPENDENT
+          key: nexus.ovpn.operator.status.clientlist
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: REGEX
+              parameters:
+                - 'Common Name([.|\s\S]*)ROUTING'
+                - \0
+            -
+              type: STR_REPLACE
+              parameters:
+                - ROUTING
+                - ''
+            -
+              type: CSV_TO_JSON
+              parameters:
+                - ''
+                - ''
+                - '1'
+          master_item:
+            key: 'vfs.file.contents[{$NEXUS_OVPN_OPERATORS_STATUS}]'
+          tags:
+            -
+              tag: Nexus
+              value: data
+            -
+              tag: Nexus
+              value: Operators
+        -
+          uuid: 3f4de90d9b274865bdaf3e7848c4ab2e
+          name: nexus.ovpn.operator.status.routingtable
+          type: DEPENDENT
+          key: nexus.ovpn.operator.status.routingtable
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: REGEX
+              parameters:
+                - 'ROUTING TABLE([.|\s\S]*)GLOBAL STATS'
+                - \0
+            -
+              type: STR_REPLACE
+              parameters:
+                - 'GLOBAL STATS'
+                - ''
+            -
+              type: STR_REPLACE
+              parameters:
+                - 'ROUTING TABLE'
+                - ''
+            -
+              type: TRIM
+              parameters:
+                - \n\r
+            -
+              type: CSV_TO_JSON
+              parameters:
+                - ''
+                - ''
+                - '1'
+          master_item:
+            key: 'vfs.file.contents[{$NEXUS_OVPN_OPERATORS_STATUS}]'
+          tags:
+            -
+              tag: Nexus
+              value: data
+            -
+              tag: Nexus
+              value: Operators
+        -
+          uuid: b1441287c0934c418695e6f1c7f01859
+          name: nexus.ovpn.implant.status.data
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[{$NEXUS_OVPN_IMPLANTS_STATUS}]'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Nexus
+              value: data
+            -
+              tag: Nexus
+              value: Implants
+        -
+          uuid: 76f7e09f02224ce38ea32ed052f6391a
+          name: nexus.ovpn.operator.status.data
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[{$NEXUS_OVPN_OPERATORS_STATUS}]'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Nexus
+              value: data
+            -
+              tag: Nexus
+              value: Operators
+      discovery_rules:
+        -
+          uuid: 659612808d5647e1becd76fd5aab2f5e
+          name: nexus.ovpn.implant.status.clientlist.discovery
+          type: DEPENDENT
+          key: 'nexus.ovpn.implant.status.clientlist.discovery[clients]'
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 59283b8249494c12a803d11b0a510d1a
+              name: 'Nexus Implant  {#IMPLANT_NAME} {#IMPLANT_ADR} Connection Resets'
+              type: ZABBIX_ACTIVE
+              key: 'log.count[{$NEXUS_SYSLOG_PATH},(.*(?:{#IMPLANT_NAME}/{#IMPLANT_ADR} SIGUSR1).*)]'
+              units: Resets
+              tags:
+                -
+                  tag: Nexus
+                  value: Connections
+                -
+                  tag: Nexus
+                  value: Errors
+                -
+                  tag: Nexus
+                  value: Implants
+            -
+              uuid: 7d8ebd5a40bc49eeb13f75f23238b50a
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Log'
+              type: ZABBIX_ACTIVE
+              key: 'log[ {$NEXUS_SYSLOG_PATH},(.*(vpn ovpn-implant)*(?:{#IMPLANT_ADR}).*)]'
+              trends: '0'
+              value_type: LOG
+              tags:
+                -
+                  tag: Nexus
+                  value: Implants
+                -
+                  tag: Nexus
+                  value: Log
+            -
+              uuid: 146dd6bf68ae4f6899a0fe871390e05d
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Real Address'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.addr.real[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'' && @.["Real Address"] == ''{#IMPLANT_ADR}'')].["Real Address"].first()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Addresses
+                -
+                  tag: Nexus
+                  value: Implants
+            -
+              uuid: c2273f3a2b0b4a29ae04cf634e472287
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Virtual Address'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.addr.virt[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'' && @.["Real Address"] == ''{#IMPLANT_ADR}'')].["Virtual Address"].first()'
+              master_item:
+                key: nexus.ovpn.implant.status.routingtable
+              tags:
+                -
+                  tag: Nexus
+                  value: Addresses
+                -
+                  tag: Nexus
+                  value: Implants
+            -
+              uuid: 17023a20df7e4035aa30f768c901b17b
+              name: 'Nexus Implant {#IMPLANT_NAME} Bytes Received'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.bytes.rcvd[{#IMPLANT_NAME]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'')].["Bytes Received"].sum()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Implants
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+            -
+              uuid: f0d00e02d0f44269bf4fc1e29795c26d
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Bytes Received'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.bytes.rcvd[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'' && @.["Real Address"] == ''{#IMPLANT_ADR}'')].["Bytes Received"].first()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Implants
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+            -
+              uuid: 36eeb8fe47fe40798d5ceeadd6643400
+              name: 'Nexus Implant {#IMPLANT_NAME} Bytes Sent'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.bytes.sent[{#IMPLANT_NAME]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'')].["Bytes Sent"].sum()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Implants
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+            -
+              uuid: 3ee8f61e0946401c8139ed4834bf09c3
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Bytes Sent'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.bytes.sent[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'' && @.["Real Address"] == ''{#IMPLANT_ADR}'')].["Bytes Sent"].first()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Implants
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+            -
+              uuid: fc05afd2b71141fca9eccecf9a667d57
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Connected Since'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.conndtm[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'' && @.["Real Address"] == ''{#IMPLANT_ADR}'')].["Connected Since"].first()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: DTM
+                -
+                  tag: Nexus
+                  value: Implants
+            -
+              uuid: 86eb3a0d57464a02b6e2a2e9ddb69047
+              name: 'Nexus Implant {#IMPLANT_NAME} Connections'
+              type: DEPENDENT
+              key: 'nexus.ovpn.implant.connections[{#IMPLANT_NAME}]'
+              delay: '0'
+              units: Connections
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#IMPLANT_NAME}'')].["Real Address"].length()'
+              master_item:
+                key: nexus.ovpn.implant.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Connections
+                -
+                  tag: Nexus
+                  value: Implants
+          graph_prototypes:
+            -
+              uuid: 8e6466ddeaa64404a7c54296196e4d48
+              name: 'Nexus Implant {#IMPLANT_NAME} Connections'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.implant.connections[{#IMPLANT_NAME}]'
+            -
+              uuid: 3c05e5cbc63149aba90da4f265a06d81
+              name: 'Nexus Implant {#IMPLANT_NAME} Network Traffic'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.implant.bytes.rcvd[{#IMPLANT_NAME]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.implant.bytes.sent[{#IMPLANT_NAME]'
+            -
+              uuid: 440ba5b3b4f343839757818f79052763
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR) Connection Resets'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'log.count[{$NEXUS_SYSLOG_PATH},(.*(?:{#IMPLANT_NAME}/{#IMPLANT_ADR} SIGUSR1).*)]'
+            -
+              uuid: 8fdf0b70fc2144f2a6b205069493da35
+              name: 'Nexus Implant {#IMPLANT_NAME} {#IMPLANT_ADR} Network Traffic'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.implant.bytes.rcvd[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.implant.bytes.sent[{#IMPLANT_NAME}_{#IMPLANT_ADR}]'
+          master_item:
+            key: nexus.ovpn.implant.status.clientlist
+          lld_macro_paths:
+            -
+              lld_macro: '{#IMPLANT_ADR}'
+              path: '$.["Real Address"]'
+            -
+              lld_macro: '{#IMPLANT_BYTERCVD}'
+              path: '$.["Bytes Received"]'
+            -
+              lld_macro: '{#IMPLANT_BYTESSENT}'
+              path: '$.["Bytes Sent"]'
+            -
+              lld_macro: '{#IMPLANT_CONNECTEDSINCE}'
+              path: '$.["Connected Since"]'
+            -
+              lld_macro: '{#IMPLANT_NAME}'
+              path: '$.["Common Name"]'
+        -
+          uuid: f92844007def4860b6b50fa1fe87ae7f
+          name: nexus.ovpn.operator.status.clientlist.discovery
+          type: DEPENDENT
+          key: 'nexus.ovpn.operator.status.clientlist.discovery[clients]'
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 53c66c59cb824fa797474bf67a887aa9
+              name: 'Nexus Operator {#IMPLANT_NAME} {#IMPLANT_ADR} Connection Resets'
+              type: ZABBIX_ACTIVE
+              key: 'log.count[{$NEXUS_SYSLOG_PATH},(.*(?:{#OP_NAME}/{#OP_ADR} SIGUSR1).*)]'
+              units: Resets
+              tags:
+                -
+                  tag: Nexus
+                  value: Connections
+                -
+                  tag: Nexus
+                  value: Errors
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: c7dc7ea5aaee498b9d0bfb39bc0ac0a1
+              name: 'Nexus Operator {#OP_NAME} {#OP_ADR} Log'
+              type: ZABBIX_ACTIVE
+              key: 'log[ {$NEXUS_SYSLOG_PATH},(.*(vpn ovpn-operator)*(?:{#OP_ADR}).*)]'
+              trends: '0'
+              value_type: LOG
+              tags:
+                -
+                  tag: Nexus
+                  value: Log
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: db32c41c45f5495f837c9a621f4ca466
+              name: 'Nexus Operator {#OP_NAME} {#OP_ADR} Real Address'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.addr.real[{#OP_NAME}_{#OP_ADR}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'' && @.["Real Address"] == ''{#OP_ADR}'')].["Real Address"].first()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Addresses
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: f5a830d0c25040a1b1bc304c445097a2
+              name: 'Nexus Operator {#OP_NAME} {#OP_ADR} Virtual Address'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.addr.virt[{#OP_NAME}_{#OP_ADR}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'' && @.["Real Address"] == ''{#OP_ADR}'')].["Virtual Address"].first()'
+              master_item:
+                key: nexus.ovpn.operator.status.routingtable
+              tags:
+                -
+                  tag: Nexus
+                  value: Addresses
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: c541f683b4834289a9ee6c4a951b3448
+              name: 'Nexus Operator {#OP_NAME} Bytes Received'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.bytes.rcvd[{#OP_NAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'')].["Bytes Received"].sum()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: 439e85bfbca74e23babc6a5969113083
+              name: 'Nexus Operator {#OP_NAME} {#OP_ADR} Bytes Received'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.bytes.rcvd[{#OP_NAME}_{#OP_ADR}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'' && @.["Real Address"] == ''{#OP_ADR}'')].["Bytes Received"].first()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: f13608cb6e714e29aa62df6c7d786fc7
+              name: 'Nexus Operator {#OP_NAME} Bytes Sent'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.bytes.sent[{#OP_NAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'')].["Bytes Sent"].sum()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: f498767d9cc1412a850b667112d22573
+              name: 'Nexus Operator {#OP_NAME} {#OP_ADR} Bytes Sent'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.bytes.sent[{#OP_NAME}_{#OP_ADR}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'' && @.["Real Address"] == ''{#OP_ADR}'')].["Bytes Sent"].first()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: 'Network Traffic'
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: e0ead8e711914f56a449c31af6c9a3d9
+              name: 'Nexus Operator {#OP_NAME} {#OP_ADR} Connected Since'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.conndtm[{#OP_NAME}_{#OP_ADR}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'' && @.["Real Address"] == ''{#OP_ADR}'')].["Connected Since"].first()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: DTM
+                -
+                  tag: Nexus
+                  value: Operators
+            -
+              uuid: e33c9185c8ba4e91b99dbd25cace238a
+              name: 'Nexus Operator {#OP_NAME} Connections'
+              type: DEPENDENT
+              key: 'nexus.ovpn.operator.connections[{#OP_NAME}]'
+              delay: '0'
+              units: Connections
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.["Common Name"] == ''{#OP_NAME}'' )].["Common Name"].length()'
+              master_item:
+                key: nexus.ovpn.operator.status.clientlist
+              tags:
+                -
+                  tag: Nexus
+                  value: Connections
+                -
+                  tag: Nexus
+                  value: Operators
+          graph_prototypes:
+            -
+              uuid: a3fa81c5c2df47099f7db21f96056df1
+              name: 'Nexus Operator {#IMPLANT_NAME} Connections'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.operator.connections[{#OP_NAME}]'
+            -
+              uuid: 5b9d8ed3755d4e848302b3975ebec3e8
+              name: 'Nexus Operator {#IMPLANT_NAME} Network Traffic'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.operator.bytes.rcvd[{#OP_NAME}]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.operator.bytes.sent[{#OP_NAME}]'
+            -
+              uuid: 8ae53ac3ce1041078f9003166c6155b3
+              name: 'Nexus Operator {#IMPLANT_NAME} {#IMPLANT_ADR} Network Traffic'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.operator.bytes.rcvd[{#OP_NAME}_{#OP_ADR}]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: 'Nexus VPN FrontEnd Endpoint'
+                    key: 'nexus.ovpn.operator.bytes.sent[{#OP_NAME}_{#OP_ADR}]'
+          master_item:
+            key: nexus.ovpn.operator.status.clientlist
+          lld_macro_paths:
+            -
+              lld_macro: '{#OP_ADR}'
+              path: '$.["Real Address"]'
+            -
+              lld_macro: '{#OP_BYTERCVD}'
+              path: '$.["Bytes Received"]'
+            -
+              lld_macro: '{#OP_BYTESSENT}'
+              path: '$.["Bytes Sent"]'
+            -
+              lld_macro: '{#OP_CONNECTEDSINCE}'
+              path: '$.["Connected Since"]'
+            -
+              lld_macro: '{#OP_NAME}'
+              path: '$.["Common Name"]'
+      tags:
+        -
+          tag: Application
+          value: Nexus
+      macros:
+        -
+          macro: '{$NEXUS_OVPN_IMPLANTS_STATUS}'
+          value: /var/log/openvpn-implants.log
+          description: 'Status file for OpenVPN Implants'
+        -
+          macro: '{$NEXUS_OVPN_OPERATORS_STATUS}'
+          value: /var/log/openvpn-operators.log
+          description: 'Status file for OpenVPN Operators'
+        -
+          macro: '{$NEXUS_SYSLOG_PATH}'
+          value: /var/log/syslog
+          description: 'Path of syslog'
+        -
+          macro: '{$NEXUS_TRIG_MAX_CONNS}'
+          value: '100'
+          description: 'Max Connections Before Alert'
+        -
+          macro: '{$NEXUS_TRIG_MAX_IMP_CONNS}'
+          value: '50'
+          description: 'Max Connections From Implants Before Alert'
+        -
+          macro: '{$NEXUS_TRIG_MAX_IMP_CONNS_PER_IMP}'
+          value: '5'
+          description: 'Max Connections From Implants Per Implant Before Alert'
+        -
+          macro: '{$NEXUS_TRIG_MAX_OP_CONNS}'
+          value: '50'
+          description: 'Max Connections From Operators Before Alert'
+        -
+          macro: '{$NEXUS_TRIG_MAX_OP_CONNS_PER_OP}'
+          value: '5'
+          description: 'Max Connections From Operators Per Operator Before Alert'
+      dashboards:
+        -
+          uuid: ef6ea0f0439e4d89a4fa4555835fb750
+          name: 'Nexus Connections'
+          pages:
+            -
+              widgets:
+                -
+                  type: PLAIN_TEXT
+                  name: 'Implant Data'
+                  'y': '15'
+                  width: '12'
+                  height: '4'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: style
+                      value: '1'
+                    -
+                      type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemids
+                      value:
+                        key: 'vfs.file.contents[{$NEXUS_OVPN_IMPLANTS_STATUS}]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'Nexus Connections'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: GRAPH
+                      name: graphid
+                      value:
+                        name: 'Nexus Connections'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'Nexus Expired Connection Attempts'
+                  x: '12'
+                  'y': '10'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: source_type
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemid
+                      value:
+                        key: 'log.count[{$NEXUS_SYSLOG_PATH},"error=certificate has expired"]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'Nexus Implant Traffic'
+                  'y': '5'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: GRAPH
+                      name: graphid
+                      value:
+                        name: 'Nexus Implant Network Traffic'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'Nexus Operator Network Traffic'
+                  'y': '10'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: GRAPH
+                      name: graphid
+                      value:
+                        name: 'Nexus Operator Network Traffic'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: PLAIN_TEXT
+                  name: 'Operator Data'
+                  x: '12'
+                  'y': '15'
+                  width: '12'
+                  height: '4'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: style
+                      value: '1'
+                    -
+                      type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemids
+                      value:
+                        key: 'vfs.file.contents[{$NEXUS_OVPN_OPERATORS_STATUS}]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'TLS Handshake Failures'
+                  x: '12'
+                  'y': '5'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: source_type
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemid
+                      value:
+                        key: 'log.count[{$NEXUS_SYSLOG_PATH},"TLS Error: TLS handshake failed"]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'WG Keep Alive'
+                  x: '12'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: source_type
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemid
+                      value:
+                        key: 'log.count[{$NEXUS_SYSLOG_PATH},Receiving keepalive packet from peer]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+        -
+          uuid: 4b40bc7132054a44bbcd748192407066
+          name: 'Nexus Errors'
+          pages:
+            -
+              widgets:
+                -
+                  type: PLAIN_TEXT
+                  name: 'Expired Connections Log'
+                  'y': '5'
+                  width: '24'
+                  height: '7'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: show_as_html
+                      value: '1'
+                    -
+                      type: INTEGER
+                      name: style
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemids
+                      value:
+                        key: 'log[{$NEXUS_SYSLOG_PATH},(.*(vpn ovpn-)*(?:error=certificate has expired).*)]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'Nexus Expired Connection Attempts'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: source_type
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemid
+                      value:
+                        key: 'log.count[{$NEXUS_SYSLOG_PATH},"error=certificate has expired"]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+                -
+                  type: GRAPH_CLASSIC
+                  name: 'Nexus TLS Handshake Failures'
+                  x: '12'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: source_type
+                      value: '1'
+                    -
+                      type: ITEM
+                      name: itemid
+                      value:
+                        key: 'log.count[{$NEXUS_SYSLOG_PATH},"TLS Error: TLS handshake failed"]'
+                        host: 'Nexus VPN FrontEnd Endpoint'
+  graphs:
+    -
+      uuid: 2f01f705b1a145cfba21d16ca70a6b39
+      name: 'Nexus Connections'
+      ymin_type_1: FIXED
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.implant.connections
+        -
+          sortorder: '2'
+          color: F63100
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.operator.connections
+    -
+      uuid: c4171e6d086a476c8481159b910a0057
+      name: 'Nexus Implant Client Connections'
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.implant.connections
+    -
+      uuid: c5928641f2844e028f53d1613923b28b
+      name: 'Nexus Implant Network Traffic'
+      ymin_type_1: FIXED
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.implant.bytes.rcvd
+        -
+          sortorder: '2'
+          color: F63100
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.implant.bytes.sent
+    -
+      uuid: 278f904274d244e9b248d935400a878f
+      name: 'Nexus Operator Client Connections'
+      ymin_type_1: FIXED
+      graph_items:
+        -
+          sortorder: '1'
+          color: F63100
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.operator.connections
+    -
+      uuid: 97a452452e9944b7a19b5bf0d3fe4d0c
+      name: 'Nexus Operator Network Traffic'
+      ymin_type_1: FIXED
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.operator.bytes.rcvd
+        -
+          sortorder: '2'
+          color: F63100
+          item:
+            host: 'Nexus VPN FrontEnd Endpoint'
+            key: nexus.ovpn.operator.bytes.sent
